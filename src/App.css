@@ -1,0 +1,203 @@
+:root {
+  --primary-color: #4a90e2;
+  --bg-color: #f4f7f6;
+  --card-bg: #ffffff;
+  --text-color: #333333;
+  --text-secondary: #666666;
+  --danger-color: #e74c3c;
+  --success-color: #2ecc71;
+  --border-color: #dddddd;
+}
+
+[data-theme='dark'] {
+  --primary-color: #5da0e6;
+  --bg-color: #121212;
+  --card-bg: #1e1e1e;
+  --text-color: #f0f0f0;
+  --text-secondary: #aaaaaa;
+  --border-color: #333333;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.app-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+h1 {
+  margin: 0;
+  color: var(--primary-color);
+}
+
+.theme-toggle {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.theme-toggle:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.main-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.card h2, .card h3 {
+  margin-top: 0;
+  color: var(--primary-color);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  box-sizing: border-box;
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-secondary {
+  background-color: var(--text-secondary);
+  color: white;
+}
+
+button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error-text {
+  color: var(--danger-color);
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.success-text {
+  color: var(--success-color);
+  font-weight: bold;
+}
+
+.progress-container {
+  width: 100%;
+  background-color: var(--border-color);
+  border-radius: 10px;
+  margin: 10px 0;
+  height: 10px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: var(--primary-color);
+  transition: width 0.3s ease;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.booking-item {
+  border-bottom: 1px solid var(--border-color);
+  padding: 10px 0;
+}
+.booking-item:last-child {
+  border-bottom: none;
+}
+
+.timer {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--danger-color);
+  text-align: center;
+  padding: 10px;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}

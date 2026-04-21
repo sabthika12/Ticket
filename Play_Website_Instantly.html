@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Ticket Booking System</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+            --border-color: #dddddd;
+        }
+
+        [data-theme='dark'] {
+            --primary-color: #5da0e6;
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #f0f0f0;
+            --text-secondary: #aaaaaa;
+            --border-color: #333333;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .app-container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .auth-container { max-width: 400px; margin: 80px auto; padding: 20px; }
+
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        h1 { margin: 0; color: var(--primary-color); }
+
+        .theme-toggle {
+            background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color);
+            padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 14px; transition: all 0.2s;
+        }
+        .theme-toggle:hover { background: var(--primary-color); color: white; }
+
+        .main-content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .main-content { grid-template-columns: 1fr; } }
+
+        .card { background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid var(--border-color); }
+        .card h2, .card h3 { margin-top: 0; color: var(--primary-color); }
+        .card.auth-card { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        input, select {
+            width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; background: var(--bg-color); color: var(--text-color); margin-bottom: 15px;
+        }
+
+        .button-group { display: flex; gap: 10px; margin-top: 10px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background-color: var(--primary-color); color: white; width: 100%; }
+        .btn-secondary { background-color: var(--card-bg); color: var(--primary-color); border: 1px solid var(--primary-color); width: 100%; }
+        button:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .error-text { color: var(--danger-color); font-size: 14px; margin-top: -5px; margin-bottom: 15px; }
+        .success-text { color: var(--success-color); font-weight: bold; }
+        .link-text { color: var(--primary-color); cursor: pointer; text-decoration: underline; text-align: center; display: block; margin-top: 15px; }
+
+        .progress-container { width: 100%; background-color: var(--border-color); border-radius: 10px; margin: 10px 0; height: 10px; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: var(--primary-color); transition: width 0.3s ease; }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; display: inline-block; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .booking-item { border-bottom: 1px solid var(--border-color); padding: 10px 0; }
+        .booking-item:last-child { border-bottom: none; }
+        .timer { font-size: 18px; font-weight: bold; color: var(--danger-color); text-align: center; padding: 10px; background: rgba(231, 76, 60, 0.1); border-radius: 8px; margin-bottom: 20px; }
+        .user-greeting { font-weight: bold; color: var(--text-secondary); margin-left: auto; margin-right: 20px;}
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // ---- Auth Component (Login / Sign up) ----
+        function Auth({ onLogin }) {
+            const [isLogin, setIsLogin] = useState(true);
+            const [email, setEmail] = useState("");
+            const [password, setPassword] = useState("");
+            const [name, setName] = useState("");
+            const [error, setError] = useState("");
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setError("");
+                
+                if (!email || !password || (!isLogin && !name)) {
+                    setError("Please fill in all fields.");
+                    return;
+                }
+                
+                if (!/\S+@\S+\.\S+/.test(email)) {
+                    setError("Please enter a valid email address.");
+                    return;
+                }
+                
+                if (password.length < 5) {
+                    setError("Password must be at least 5 characters.");
+                    return;
+                }
+
+                // Simulate successful auth
+                const user = { name: isLogin ? email.split('@')[0] : name, email };
+                onLogin(user);
+            };
+
+            return (
+                <div className="auth-container">
+                    <div className="card auth-card">
+                        <h2 style={{ textAlign: "center", marginBottom: "30px" }}>
+                            {isLogin ? "Welcome Back 👋" : "Create Account ✨"}
+                        </h2>
+                        
+                        <form onSubmit={handleSubmit}>
+                            {!isLogin && (
+                                <div className="form-group">
+                                    <label>Full Name</label>
+                                    <input type="text" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} />
+                                </div>
+                            )}
+                            
+                            <div className="form-group">
+                                <label>Email Address</label>
+                                <input type="email" placeholder="student@department.edu" value={email} onChange={(e) => setEmail(e.target.value)} />
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>Password</label>
+                                <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+                            </div>
+                            
+                            {error && <p className="error-text">{error}</p>}
+                            
+                            <button type="submit" className="btn-primary" style={{marginTop: "10px"}}>
+                                {isLogin ? "Sign In to Book" : "Create Account"}
+                            </button>
+                        </form>
+                        
+                        <p className="link-text" onClick={() => { setIsLogin(!isLogin); setError(""); }}>
+                            {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Log In"}
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        // ---- Existing Components ----
+        function EventDetails({ event }) {
+            const [timeLeft, setTimeLeft] = useState('');
+
+            useEffect(() => {
+                const targetDate = new Date(event.date + 'T' + '10:00:00').getTime();
+                const interval = setInterval(() => {
+                    const now = new Date().getTime();
+                    const distance = targetDate - now;
+                    if (distance < 0) {
+                        clearInterval(interval);
+                        setTimeLeft('Event Started');
+                        return;
+                    }
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    setTimeLeft(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+                }, 1000);
+                return () => clearInterval(interval);
+            }, [event.date]);
+
+            const progressPercentage = ((event.totalTickets - event.available) / event.totalTickets) * 100;
+
+            return (
+                <div className="card">
+                    <h2>{event.name}</h2>
+                    {timeLeft && <div className="timer">⏳ Starts in: {timeLeft}</div>}
+                    <p><strong>Department:</strong> {event.department}</p>
+                    <p><strong>Date:</strong> {event.date} | <strong>Time:</strong> {event.time}</p>
+                    <p><strong>Venue:</strong> {event.venue}</p>
+                    <p><strong>Regular Price:</strong> ₹{event.price}</p>
+                    <p><strong>VIP Price:</strong> ₹{event.vipPrice}</p>
+                    <div>
+                        <p style={{marginBottom: '5px'}}>
+                            <strong>Available Tickets:</strong> {event.available} / {event.totalTickets}
+                        </p>
+                        <div className="progress-container">
+                            <div className="progress-bar" style={{ width: `${progressPercentage}%`, backgroundColor: progressPercentage > 80 ? 'var(--danger-color)' : 'var(--primary-color)' }}></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function BookingForm({ event, setEvent, onBook, onReset, currentUser }) {
+            const initialFormState = { name: currentUser.name, email: currentUser.email, dept: "", tickets: "", category: "Regular" };
+            const [form, setForm] = useState(initialFormState);
+            const [error, setError] = useState("");
+            const [success, setSuccess] = useState(false);
+            const [isLoading, setIsLoading] = useState(false);
+
+            const handleChange = (e) => {
+                setForm({ ...form, [e.target.name]: e.target.value });
+                if (error) setError("");
+                if (success) setSuccess(false);
+            };
+
+            const validate = () => {
+                if (!form.name || !form.email || !form.dept || !form.tickets) return "All fields are required.";
+                if (!/\S+@\S+\.\S+/.test(form.email)) return "Please enter a valid email address.";
+                if (form.tickets <= 0) return "Number of tickets must be positive.";
+                if (form.tickets > event.available) return `Not enough tickets. Only ${event.available} left.`;
+                return "";
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                const err = validate();
+                if (err) { setError(err); return; }
+
+                setError("");
+                setIsLoading(true);
+
+                setTimeout(() => {
+                    const isVIP = form.category === "VIP";
+                    const unitPrice = isVIP ? event.vipPrice : event.price;
+                    const totalPrice = form.tickets * unitPrice;
+                    const bookingId = "BK" + Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+
+                    setEvent({ ...event, available: event.available - form.tickets });
+
+                    onBook({
+                        ...form, bookingId, unitPrice, totalPrice, date: new Date().toLocaleString()
+                    });
+
+                    setSuccess(true);
+                    setIsLoading(false);
+                    setForm({...initialFormState, dept: form.dept}); // preserve dept for quick re-book
+                }, 1500);
+            };
+
+            const handleReset = () => {
+                setForm(initialFormState);
+                setError("");
+                setSuccess(false);
+                onReset();
+            };
+
+            const currentUnitPrice = form.category === "VIP" ? event.vipPrice : event.price;
+            const liveTotal = form.tickets > 0 ? form.tickets * currentUnitPrice : 0;
+
+            return (
+                <div className="card">
+                    <h3>Book Tickets</h3>
+                    <form onSubmit={handleSubmit}>
+                        <div className="form-group">
+                            <label>Full Name</label>
+                            <input name="name" placeholder="John Doe" value={form.name} onChange={handleChange} disabled={isLoading || event.available === 0}/>
+                        </div>
+                        <div className="form-group">
+                            <label>Email Address</label>
+                            <input name="email" placeholder="john@example.com" value={form.email} onChange={handleChange} disabled={isLoading || event.available === 0}/>
+                        </div>
+                        <div className="form-group">
+                            <label>Department</label>
+                            <input name="dept" placeholder="e.g. IT, HR" value={form.dept} onChange={handleChange} disabled={isLoading || event.available === 0}/>
+                        </div>
+                        <div className="form-group">
+                            <label>Seat Category</label>
+                            <select name="category" value={form.category} onChange={handleChange} disabled={isLoading || event.available === 0}>
+                                <option value="Regular">Regular (₹{event.price})</option>
+                                <option value="VIP">VIP (₹{event.vipPrice})</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label>Number of Tickets</label>
+                            <input name="tickets" type="number" min="1" max={event.available} placeholder="0" value={form.tickets} onChange={handleChange} disabled={isLoading || event.available === 0}/>
+                        </div>
+                        {form.tickets > 0 && liveTotal > 0 && !error && (
+                            <div style={{ marginBottom: '15px', fontWeight: 'bold' }}>Live Total: ₹{liveTotal}</div>
+                        )}
+                        {error && <p className="error-text">{error}</p>}
+                        {success && <p className="success-text">Booking successful! Check summary.</p>}
+                        {event.available === 0 && <p className="error-text">Sold out!</p>}
+
+                        <div className="button-group">
+                            <button type="submit" className="btn-primary" disabled={isLoading || success || event.available === 0}>
+                                {isLoading ? <span className="spinner"></span> : "Confirm Booking"}
+                            </button>
+                            <button type="button" className="btn-secondary" onClick={handleReset} disabled={isLoading}>Clear</button>
+                        </div>
+                    </form>
+                </div>
+            );
+        }
+
+        function BookingSummary({ booking, event }) {
+            if (!booking) return null;
+            return (
+                <div className="card" style={{ borderLeft: '4px solid var(--success-color)' }}>
+                    <h3>🎉 Booking Confirmed!</h3>
+                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                        An email confirmation has been sent to <strong>{booking.email}</strong>.
+                    </p>
+                    <div style={{ marginTop: '15px' }}>
+                        <p><strong>Booking ID:</strong> {booking.bookingId}</p>
+                        <p><strong>Name:</strong> {booking.name}</p>
+                        <p><strong>Event:</strong> {event.name}</p>
+                        <p><strong>Tickets:</strong> {booking.tickets} ({booking.category})</p>
+                        <hr style={{ border: 'none', borderTop: '1px dashed var(--border-color)', margin: '15px 0' }} />
+                        <p style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--primary-color)' }}>
+                            Total Paid: ₹{booking.totalPrice}
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        function BookingHistory({ bookings }) {
+            if (!bookings || bookings.length === 0) {
+                return (
+                    <div className="card">
+                        <h3>📜 Booking History</h3>
+                        <p style={{ color: 'var(--text-secondary)' }}>No bookings made yet.</p>
+                    </div>
+                );
+            }
+            return (
+                <div className="card">
+                    <h3>📜 Booking History</h3>
+                    <div>
+                        {bookings.map((booking) => (
+                            <div key={booking.bookingId} className="booking-item">
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <strong>{booking.name} ({booking.tickets} {booking.category})</strong>
+                                    <span>₹{booking.totalPrice}</span>
+                                </div>
+                                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                                    ID: {booking.bookingId} | Date: {booking.date}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function App() {
+            const [darkMode, setDarkMode] = useState(false);
+            const [currentUser, setCurrentUser] = useState(null); // Auth State
+            
+            const [eventData, setEventData] = useState({
+                name: "Tech Innovators Summit 2026",
+                department: "Computer Science",
+                date: "2026-05-15",
+                time: "10:00 AM",
+                venue: "Main Auditorium",
+                price: 500,
+                vipPrice: 1000,
+                totalTickets: 100,
+                available: 100
+            });
+            const [bookings, setBookings] = useState([]);
+            const [currentBooking, setCurrentBooking] = useState(null);
+
+            useEffect(() => {
+                document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+            }, [darkMode]);
+
+            const handleBook = (bookingData) => {
+                setCurrentBooking(bookingData);
+                setBookings([bookingData, ...bookings]);
+            };
+
+            const handleReset = () => setCurrentBooking(null);
+
+            // If not logged in, show Auth Screen
+            if (!currentUser) {
+                return (
+                    <div className="app-container">
+                        <header>
+                            <h1>🎫 Event Ticket System</h1>
+                            <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
+                                {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+                            </button>
+                        </header>
+                        <Auth onLogin={(user) => setCurrentUser(user)} />
+                    </div>
+                );
+            }
+
+            // Main App Dashboard once logged in
+            return (
+                <div className="app-container">
+                    <header>
+                        <h1>🎫 Event Ticket System</h1>
+                        <span className="user-greeting">👤 Logged in as {currentUser.name}</span>
+                        <button className="theme-toggle" style={{marginLeft: "10px"}} onClick={() => setDarkMode(!darkMode)}>
+                            {darkMode ? '☀️ Light' : '🌙 Dark'}
+                        </button>
+                        <button className="theme-toggle" style={{marginLeft: "10px", borderColor: "var(--danger-color)", color: "var(--danger-color)"}} onClick={() => {setCurrentUser(null); setBookings([]); setCurrentBooking(null);}}>
+                            Logout
+                        </button>
+                    </header>
+                    <div className="main-content">
+                        <div className="left-column">
+                            <EventDetails event={eventData} />
+                            <BookingForm event={eventData} setEvent={setEventData} onBook={handleBook} onReset={handleReset} currentUser={currentUser} />
+                        </div>
+                        <div className="right-column">
+                            {currentBooking && <BookingSummary booking={currentBooking} event={eventData} />}
+                            <BookingHistory bookings={bookings} />
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
